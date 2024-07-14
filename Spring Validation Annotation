@@ -14,7 +14,7 @@
 @Digits: Ensures the number field has an integer and fraction digits within specified bounds.
 
 
-
+note: @NotBlank cannot be used with numeric types, so @NotNull is appropriate.
 
 ================================================================================================================
 
