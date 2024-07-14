@@ -1,0 +1,119 @@
+
+
+
+@NotNull: Ensures the field is not null.
+@NotEmpty: Ensures the field is not null or empty (can be applied to collections, maps, etc.).
+@NotBlank: Ensures the field is not null, not empty, and not whitespace only.
+@Size: Checks if the field's size is between specified bounds.
+@Min and @Max: Ensures the number field is within the specified range.
+@Email: Ensures the field is a valid email address.
+@Pattern: Validates the field against a specified regex pattern.
+@Past, @PastOrPresent, @Future, and @FutureOrPresent: Ensures the date/time field is in the past or future.
+@Positive and @Negative: Ensures the number field is positive or negative.
+@PositiveOrZero and @NegativeOrZero: Ensures the number field is positive or zero, or negative or zero.
+@Digits: Ensures the number field has an integer and fraction digits within specified bounds.
+
+
+
+
+================================================================================================================
+
+
+
+
+
+
+package com.example.demo.dto;
+
+import jakarta.validation.constraints.*;
+import lombok.Data;
+
+import java.time.LocalDate;
+
+@Data
+public class UserDto {
+
+    @NotNull(message = "Id cannot be null")
+    private Long id;
+
+    @NotBlank(message = "Username is mandatory")
+    @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters")
+    private String username;
+
+    @Email(message = "Email should be valid")
+    private String email;
+
+    @NotNull(message = "Age cannot be null")
+    @Min(value = 18, message = "Age should not be less than 18")
+    @Max(value = 65, message = "Age should not be more than 65")
+    private Integer age;
+
+    @Pattern(regexp = "^[0-9]{10}$", message = "Phone number should be 10 digits")
+    private String phoneNumber;
+
+    @FutureOrPresent(message = "Registration date should be today or in the future")
+    private LocalDate registrationDate;
+
+}
+
+
+
+
+===============================================================================================================
+
+
+
+package com.example.demo.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
+}
+
+
+
+===========================================================================================================
+
+
+package com.example.demo.controller;
+
+import com.example.demo.dto.UserDto;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    @PostMapping
+    public ResponseEntity<String> createUser(@RequestBody @Valid UserDto userDto) {    <==  use @Valid for enabling spring validation 
+        // Process the valid userDto
+        return new ResponseEntity<>("User is valid", HttpStatus.OK);
+    }
+
+}
+
